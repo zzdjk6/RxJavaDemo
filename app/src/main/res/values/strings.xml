@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">RxJavaDemo</string>
+    <string name="button_captcha_title">CAPTCHA</string>
+    <string name="edit_text_phone_hint">Phone Number</string>
+    <string name="edit_text_captcha_hint">Captcha Code</string>
+    <string name="button_submit_title">Submit</string>
+</resources>
