@@ -43,7 +43,9 @@ public class MainActivity extends Activity {
     private static final int COUNT_DOWN_MAX = 10;
 
     // http://reactivex.io/documentation/subject.html
-    private PublishSubject<Boolean> rx_stopCaptchaTimer;
+    private PublishSubject<Void> rx_stopCaptchaTimer;
+
+    // There is no Variable type in RxJava like RxSwift, but we can use BehaviorSubject
     private BehaviorSubject<Boolean> rx_captchaTimerRunning;
 
     private Observable<Boolean> rx_phoneValid;
@@ -55,33 +57,37 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        // init hot signals
         initRxPhoneValid();
         initRxCaptchaValid();
         initRxStopCaptchaTimer();
         initRxCaptchaTimerRunning();
 
+        // observe hot signals to change state of buttons
         bindButtonSubmitEnableState();
         bindButtonCaptchaEnableState();
 
+        // react to UI event in Rx way
+        // RxCocoa for iOS has similar functionality
         observeButtonCaptchaClick();
         observeButtonSubmitClick();
     }
 
     private void initRxPhoneValid() {
         rx_phoneValid = RxTextView
-            .textChanges(editTextPhone)
+            .textChanges(editTextPhone) // signal for text change
+            .doOnNext(new Action1<CharSequence>() {
+                @Override
+                public void call(CharSequence charSequence) {
+                    rx_stopCaptchaTimer.onNext(null);
+                }
+            })
             .map(new Func1<CharSequence, Boolean>() {
                 @Override
                 public Boolean call(CharSequence charSequence) {
                     return charSequence.length() == 11;
                 }
-            })
-            .doOnNext(new Action1<Boolean>() {
-                @Override
-                public void call(Boolean aBoolean) {
-                    rx_stopCaptchaTimer.onNext(true);
-                }
-            });
+            }); // signal for indicate whether phone number is valid
     }
 
     private void initRxCaptchaValid() {
@@ -223,6 +229,7 @@ public class MainActivity extends Activity {
         buttonCaptcha.setText(String.format(Locale.ENGLISH, "%d S", COUNT_DOWN_MAX));
         rx_captchaTimerRunning.onNext(true);
 
+        // Deadly simple countdown timer in Rx
         Observable
             .interval(1, TimeUnit.SECONDS)
             .take(COUNT_DOWN_MAX)
